@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>购物车</title>
+<style>
+#carList li{
+	position:relative;
+	padding-bottom:15px;
+	margin-bottom:15px;
+	border-bottom:1px solid #ddd;
+}
+#carList img{
+	display:block;width:100px;
+	}
+#carList li .btn-close{
+	position:absolute;
+	top:0;
+	right:0;
+	padding:0 5px;
+	cursor:default;
+	}
+#carList li .btn-close:hover{
+	background-color:#f00;color:#fff;
+	}
+.subPrice{
+	padding:5px 20px;
+	color:#f00;
+	font-weight:bold;
+	text-align:right;
+	}
+#carList .price{
+	color:#f00;
+	}
+.price::before{
+	content:'￥';
+	font-size:11px;
+}
+#carList .price span{
+	font-size:11px;
+	}
+.back{
+		color:gray;
+		text-decoration:none;
+	}
+.black{
+		padding:10px;
+		margin:10px;
+		background-color:gray;
+		color:white;
+		text-decoration:none;
+	}
+.buy{
+	padding:10px;
+	margin:10px;
+	background-color:red;
+	color:white;
+	text-decoration:none;
+}
+</style>
+<script>
+window.onload = function(){
+/*
+读取cookie中的carlist
+把json字符串转换成对象/数组：JSON.parse()
+json字符串格式：
+1.必须用双引号
+2.不能右注释
+*/
+var oCarList = document.getElementById('carList');
+var oSubPrice = oCarList.nextElementSibling;
+var btnClear = document.getElementById('btnClear');
+
+var carList;
+var cookies = document.cookie.split('; ');
+for(var i=0;i<cookies.length;i++){
+var arr = cookies[i].split('=');
+if(arr[0] === 'carlist'){
+console.log(JSON.parse(arr[1]));
+carList = JSON.parse(arr[1]);
+}
+}
+
+var subPrice = 0;
+
+if(carList){
+var ul = document.createElement('ul');
+for(var i=0;i<carList.length;i++){
+var li = document.createElement('li');
+// 给每个li添加data-guid属性
+li.setAttribute('data-guid',carList[i].guid);
+
+// 商品名
+var title = document.createElement('h4');
+title.innerHTML = carList[i].name;
+
+// 商品价格
+var price = document.createElement('p');
+price.className = 'price';
+price.innerHTML = carList[i].price + '&times;' + carList[i].qty;
+
+// 商品图片
+var img = document.createElement('img');
+img.src = carList[i].imgUrl;
+
+// 添加删除按钮
+var btnClose = document.createElement('span');
+btnClose.innerHTML = '&times;';
+btnClose.className = 'btn-close';
+
+// 计算总价
+subPrice += carList[i].price*carList[i].qty;
+
+li.appendChild(title);
+li.appendChild(price);
+li.appendChild(img);
+li.appendChild(btnClose);
+
+ul.appendChild(li);
+}
+
+// 写入页面
+oCarList.appendChild(ul);
+
+// 写入总价
+// toFixed(n)获取小数点后n位（自动四舍五入，Number类型的方法）
+oSubPrice.innerHTML = '<span class="price">' + subPrice.toFixed(2) + '</span>';
+}
+
+
+// 删除商品
+oCarList.onclick = function(e){
+e = e || window.event;
+var target = e.target || e.srcElement;
+
+// 是否点击了删除按钮
+if(target.className === 'btn-close'){
+var currentLi = target.parentElement;
+
+// 获取当前guid
+var currentGUID = currentLi.getAttribute('data-guid');
+
+// 删除cookie中对应的商品
+// 根据guid取对比
+for(var i=0;i<carList.length;i++){
+// 找出要删除的商品
+if(carList[i].guid === currentGUID){
+carList.splice(i,1);
+break;
+}
+}
+
+// 更新cookie
+document.cookie = 'carlist=' + JSON.stringify(carList);
+
+// 删除li节点
+currentLi.parentElement.removeChild(currentLi);
+}
+}
+
+// 清空购物车
+// 1、删除DOM节点
+// 2、删除cookie
+btnClear.onclick = function(){
+oCarList.innerHTML = '';
+oSubPrice.innerHTML = '';
+
+// 利用设置有效期位过期事件来达到删除cookie的效果
+var now = new Date();
+now.setDate(now.getDate()-7);
+document.cookie = 'carlist=xx;expires=' + now;
+}
+}
+
+</script>
+</head>
+<body>
+<h1>购物车</h1>
+<a class="back" href="main.jsp">返回</a>
+<div id="carList">
+
+</div>
+<div class="subPrice"></div>
+<a class="black" href="#" id="btnClear">清空购物车</a>
+<a class="buy" href="buy.html">提交订单</a>
+</body>
+</html>
